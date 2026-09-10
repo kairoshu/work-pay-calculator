@@ -1,3 +1,7 @@
+[hidden] {
+  display: none !important;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -58,7 +62,8 @@ label {
   margin-bottom: 7px;
 }
 
-input {
+input,
+select {
   width: 100%;
   min-height: 48px;
   border: 1px solid #cbd5e1;
@@ -92,6 +97,10 @@ button.secondary {
   font-size: 14px;
 }
 
+button.full-width {
+  width: 100%;
+}
+
 .error {
   min-height: 1.4em;
   margin: 12px 0 0;
@@ -99,25 +108,105 @@ button.secondary {
   font-weight: 700;
 }
 
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.result-header h2 {
+  margin-bottom: 0;
+}
+
+.display-settings-panel {
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 14px;
+  background: #f9fafb;
+}
+
+.display-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.display-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.display-option input {
+  width: auto;
+  min-height: auto;
+  margin: 0;
+  padding: 0;
+}
+
 .result-list {
   margin: 0;
 }
 
-.result-list > div {
+.result-block {
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  padding: 0 12px;
+  margin-bottom: 12px;
+}
+
+.result-row {
   display: flex;
   justify-content: space-between;
   gap: 16px;
   padding: 10px 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid currentColor;
+}
+
+.result-row:last-child {
+  border-bottom: 0;
 }
 
 .result-list dt {
-  color: #4b5563;
+  color: inherit;
 }
 
 .result-list dd {
   margin: 0;
   font-weight: 700;
+  text-align: right;
+  color: inherit;
+}
+
+/* 通常：従来の文字色 */
+.result-block-summary,
+.result-block-regular {
+  color: #1f2937;
+  border-color: #d1d5db;
+}
+
+/* 残業：深緑 */
+.result-block-overtime {
+  color: #166534;
+  border-color: #166534;
+}
+
+/* 深夜：深青 */
+.result-block-night {
+  color: #1e3a8a;
+  border-color: #1e3a8a;
+}
+
+/* 残業＋深夜：赤 */
+.result-block-overtime-night {
+  color: #b91c1c;
+  border-color: #b91c1c;
 }
 
 .pay {
@@ -134,6 +223,58 @@ button.secondary {
 
 .pay strong {
   font-size: 30px;
+}
+
+.break-section {
+  margin-bottom: 16px;
+}
+
+.break-row {
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #f9fafb;
+}
+
+.break-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+button.break-remove-btn,
+button.history-delete-btn {
+  width: auto;
+  min-height: 34px;
+  padding: 6px 12px;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.history-total-card {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.history-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.history-total span {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.history-total strong {
+  font-size: 28px;
 }
 
 .history-header {
@@ -161,6 +302,18 @@ button.secondary {
   padding-top: 0;
 }
 
+.history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.history-item-header p {
+  flex: 1;
+  margin-top: 4px;
+}
+
 .history-item p {
   margin: 4px 0;
 }
@@ -172,6 +325,12 @@ button.secondary {
 
 .empty {
   color: #6b7280;
+}
+
+@media (max-width: 520px) {
+  .display-settings-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 420px) {
@@ -187,50 +346,20 @@ button.secondary {
   .pay strong {
     font-size: 26px;
   }
+
+  .history-header {
+    align-items: flex-start;
+  }
+
+  #clearAllHistoryBtn {
+    font-size: 12px;
+    padding: 0 9px;
+  }
 }
 
 
-.history-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.history-item-header p {
-  flex: 1;
-  margin-top: 4px;
-}
-
-button.history-delete-btn {
-  width: auto;
-  min-height: 34px;
-  padding: 6px 12px;
-  flex: 0 0 auto;
-  background: #e5e7eb;
-  color: #374151;
-  font-size: 14px;
-  border-radius: 8px;
-}
-
-
-.history-total-card {
-  padding-top: 16px;
-  padding-bottom: 16px;
-}
-
-.history-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.history-total span {
-  font-weight: 700;
-  font-size: 18px;
-}
-
-.history-total strong {
-  font-size: 28px;
+.break-note {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #6b7280;
 }

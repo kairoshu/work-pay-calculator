@@ -38,62 +38,157 @@
         </div>
       </div>
 
-      <button id="calculateBtn" type="button">計算する</button>
+      <div class="form-group">
+        <label for="breakEnabled">休憩</label>
+        <select id="breakEnabled">
+          <option value="no" selected>なし</option>
+          <option value="yes">あり</option>
+        </select>
+      </div>
 
+      <div id="breakSection" class="break-section" hidden>
+        <p class="break-note">休憩の日付は自動入力されます。必要な場合だけ日付を変更してください。</p>
+        <div id="breakList"></div>
+        <button id="addBreakBtn" type="button" class="secondary full-width">休憩を追加</button>
+      </div>
+
+      <button id="calculateBtn" type="button">計算する</button>
       <p id="errorMessage" class="error" aria-live="polite"></p>
     </section>
 
     <section class="card result-card">
-      <h2>計算結果</h2>
+      <div class="result-header">
+        <h2>計算結果</h2>
+        <button id="displaySettingsBtn" type="button" class="secondary">表示項目</button>
+      </div>
+
+      <div id="displaySettingsPanel" class="display-settings-panel" hidden>
+        <div class="display-settings-grid">
+          <label class="display-option"><input type="checkbox" data-display-key="boundTime" checked>総拘束時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="totalWork" checked>総勤務時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="regularTime" checked>通常時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="regularBreak" checked>通常休憩時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="regularRate" checked>通常時給</label>
+          <label class="display-option"><input type="checkbox" data-display-key="regularWork" checked>通常総勤務時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="overtimeTime" checked>残業時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="overtimeBreak" checked>残業休憩時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="overtimeWork" checked>残業総勤務時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="overtimeRate" checked>残業時給</label>
+          <label class="display-option"><input type="checkbox" data-display-key="nightTime" checked>深夜時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="nightBreak" checked>深夜休憩時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="nightWork" checked>深夜総勤務時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="nightRate" checked>深夜時給</label>
+          <label class="display-option"><input type="checkbox" data-display-key="overtimeNightTime" checked>残業＋深夜の重複時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="overtimeNightRate" checked>残業＋深夜時給</label>
+          <label class="display-option"><input type="checkbox" data-display-key="overtimeNightBreak" checked>残業＋深夜休憩時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="overtimeNightWork" checked>残業＋深夜総勤務時間</label>
+          <label class="display-option"><input type="checkbox" data-display-key="dailyPay" checked>日当</label>
+        </div>
+      </div>
 
       <dl class="result-list">
-        <div>
-          <dt>総勤務時間</dt>
-          <dd id="totalHours">-</dd>
+        <div class="result-block result-block-summary">
+          <div class="result-row" id="boundTimeRow" data-result-key="boundTime">
+            <dt>総拘束時間</dt>
+            <dd id="boundTime">-</dd>
+          </div>
+
+          <div class="result-row" id="totalWorkRow" data-result-key="totalWork">
+            <dt>総勤務時間</dt>
+            <dd id="totalWork">-</dd>
+          </div>
         </div>
 
-        <div>
-          <dt>通常時間</dt>
-          <dd id="regularHours">-</dd>
+        <div class="result-block result-block-regular">
+          <div class="result-row" id="regularTimeRow" data-result-key="regularTime">
+            <dt>通常時間</dt>
+            <dd id="regularTime">-</dd>
+          </div>
+
+          <div class="result-row" id="regularBreakRow" data-result-key="regularBreak">
+            <dt>通常休憩時間</dt>
+            <dd id="regularBreak">-</dd>
+          </div>
+
+          <div class="result-row" id="regularRateRow" data-result-key="regularRate">
+            <dt>通常時給</dt>
+            <dd id="regularRate">-</dd>
+          </div>
+
+          <div class="result-row" id="regularWorkRow" data-result-key="regularWork">
+            <dt>通常総勤務時間</dt>
+            <dd id="regularWork">-</dd>
+          </div>
         </div>
 
-        <div>
-          <dt>通常時給</dt>
-          <dd id="regularHourlyRate">-</dd>
+        <div class="result-block result-block-overtime">
+          <div class="result-row" id="overtimeTimeRow" data-result-key="overtimeTime">
+            <dt>残業時間</dt>
+            <dd id="overtimeTime">-</dd>
+          </div>
+
+          <div class="result-row" id="overtimeBreakRow" data-result-key="overtimeBreak">
+            <dt>残業休憩時間</dt>
+            <dd id="overtimeBreak">-</dd>
+          </div>
+
+          <div class="result-row" id="overtimeWorkRow" data-result-key="overtimeWork">
+            <dt>残業総勤務時間</dt>
+            <dd id="overtimeWork">-</dd>
+          </div>
+
+          <div class="result-row" id="overtimeRateRow" data-result-key="overtimeRate">
+            <dt>残業時給</dt>
+            <dd id="overtimeRateResult">-</dd>
+          </div>
         </div>
 
-        <div>
-          <dt>残業時間</dt>
-          <dd id="overtimeHours">-</dd>
+        <div class="result-block result-block-night">
+          <div class="result-row" id="nightTimeRow" data-result-key="nightTime">
+            <dt>深夜時間</dt>
+            <dd id="nightTime">-</dd>
+          </div>
+
+          <div class="result-row" id="nightBreakRow" data-result-key="nightBreak">
+            <dt>深夜休憩時間</dt>
+            <dd id="nightBreak">-</dd>
+          </div>
+
+          <div class="result-row" id="nightWorkRow" data-result-key="nightWork">
+            <dt>深夜総勤務時間</dt>
+            <dd id="nightWork">-</dd>
+          </div>
+
+          <div class="result-row" id="nightRateRow" data-result-key="nightRate">
+            <dt>深夜時給</dt>
+            <dd id="nightRateResult">-</dd>
+          </div>
         </div>
 
-        <div id="overtimeHourlyRateRow" hidden>
-          <dt>残業時給</dt>
-          <dd id="overtimeHourlyRate">-</dd>
-        </div>
+        <div class="result-block result-block-overtime-night">
+          <div class="result-row" id="overtimeNightTimeRow" data-result-key="overtimeNightTime">
+            <dt>残業＋深夜の重複時間</dt>
+            <dd id="overtimeNightTime">-</dd>
+          </div>
 
-        <div>
-          <dt>深夜時間</dt>
-          <dd id="nightHours">-</dd>
-        </div>
+          <div class="result-row" id="overtimeNightRateRow" data-result-key="overtimeNightRate">
+            <dt>残業＋深夜時給</dt>
+            <dd id="overtimeNightRateResult">-</dd>
+          </div>
 
-        <div id="nightHourlyRateRow" hidden>
-          <dt>深夜時給</dt>
-          <dd id="nightHourlyRate">-</dd>
-        </div>
+          <div class="result-row" id="overtimeNightBreakRow" data-result-key="overtimeNightBreak">
+            <dt>残業＋深夜休憩時間</dt>
+            <dd id="overtimeNightBreak">-</dd>
+          </div>
 
-        <div>
-          <dt>残業＋深夜の重複時間</dt>
-          <dd id="overtimeNightHours">-</dd>
-        </div>
-
-        <div id="overtimeNightHourlyRateRow" hidden>
-          <dt>残業＋深夜時給</dt>
-          <dd id="overtimeNightHourlyRate">-</dd>
+          <div class="result-row" id="overtimeNightWorkRow" data-result-key="overtimeNightWork">
+            <dt>残業＋深夜総勤務時間</dt>
+            <dd id="overtimeNightWork">-</dd>
+          </div>
         </div>
       </dl>
 
-      <div class="pay">
+      <div id="dailyPayRow" class="pay" data-result-key="dailyPay">
         <span>日当</span>
         <strong id="dailyPay">- 円</strong>
       </div>
@@ -109,6 +204,7 @@
     <section class="card">
       <div class="history-header">
         <h2>計算履歴</h2>
+        <button id="clearAllHistoryBtn" type="button" class="secondary">履歴をすべて削除</button>
       </div>
 
       <div id="historyList" class="history-list">
