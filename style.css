@@ -41,6 +41,22 @@ h1 {
   margin-bottom: 22px;
 }
 
+.input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.input-header h1 {
+  margin-bottom: 0;
+}
+
+.datetime-mode-toggle {
+  display: none;
+}
+
 h2 {
   font-size: 19px;
   margin-bottom: 16px;
@@ -206,8 +222,23 @@ body.mobile-wheel-open {
 }
 
 @media (max-width: 600px) and (pointer: coarse) {
+  .datetime-mode-toggle {
+    display: block;
+    flex: 0 0 44px;
+    width: 44px;
+    min-height: 44px;
+    border-radius: 10px;
+    background: #e5e7eb;
+    color: #374151;
+    font-size: 23px;
+  }
+
   input[type="datetime-local"].mobile-wheel-enabled {
     display: none;
+  }
+
+  body.calendar-input-mode input[type="datetime-local"].mobile-wheel-enabled {
+    display: block;
   }
 
   .mobile-datetime-trigger {
@@ -220,6 +251,10 @@ body.mobile-wheel-open {
     text-align: left;
     font-size: 16px;
     font-weight: 400;
+  }
+
+  body.calendar-input-mode .mobile-datetime-trigger {
+    display: none;
   }
 }
 

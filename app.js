@@ -12,6 +12,7 @@ const breakEnabledInput = document.getElementById("breakEnabled");
 const breakSectionElement = document.getElementById("breakSection");
 const breakListElement = document.getElementById("breakList");
 const addBreakBtn = document.getElementById("addBreakBtn");
+const dateTimeModeToggle = document.getElementById("dateTimeModeToggle");
 
 const errorMessageElement = document.getElementById("errorMessage");
 const resultCardElement = document.getElementById("resultCard");
@@ -61,6 +62,13 @@ let lastVisibilityContext = {
 
 document.getElementById("calculateBtn").addEventListener("click", calculate);
 document.getElementById("clearAllHistoryBtn").addEventListener("click", clearAllHistory);
+dateTimeModeToggle.addEventListener("click", () => {
+  const calendarMode = document.body.classList.toggle("calendar-input-mode");
+  const nextMode = calendarMode ? "スクロール入力" : "カレンダー入力";
+  dateTimeModeToggle.textContent = calendarMode ? "↕️" : "📅";
+  dateTimeModeToggle.setAttribute("aria-label", `${nextMode}に切り替え`);
+  dateTimeModeToggle.title = `${nextMode}に切り替え`;
+});
 breakEnabledInput.addEventListener("change", handleBreakEnabledChange);
 addBreakBtn.addEventListener("click", () => {
   const rows = [...breakListElement.querySelectorAll(".break-row")];
@@ -103,6 +111,7 @@ displayOptionInputs.forEach((input) => {
 initializeDateTimes();
 enhanceMobileDateTime(startInput);
 enhanceMobileDateTime(endInput);
+dateTimeModeToggle.hidden = false;
 loadDisplaySettings();
 applyResultVisibility();
 renderHistory();
@@ -194,8 +203,8 @@ function openMobileDateTimePicker(input, trigger, label) {
   }
 
   const days = createMobileWheel("日付", dayOptions, 365);
-  const hours = createMobileWheel("時", Array.from({length: 24}, (_, n) => ({value: String(n).padStart(2, "0"), label: String(n)})), selected.getHours());
-  const minutes = createMobileWheel("分", Array.from({length: 60}, (_, n) => ({value: String(n).padStart(2, "0"), label: String(n).padStart(2, "0")})), selected.getMinutes());
+  const hours = createMobileWheel("時", Array.from({length: 24}, (_, n) => ({value: String(n).padStart(2, "0"), label: String(n).padStart(2, "0")})), selected.getHours(), true);
+  const minutes = createMobileWheel("分", Array.from({length: 60}, (_, n) => ({value: String(n).padStart(2, "0"), label: String(n).padStart(2, "0")})), selected.getMinutes(), true);
   columns.append(days, hours, minutes);
   document.body.appendChild(overlay);
   document.body.classList.add("mobile-wheel-open");
@@ -250,23 +259,42 @@ function createMobileWheelOption(wheel, option) {
   row.textContent = option.label;
   row.addEventListener("click", () => {
     wheel.scrollTop = Array.prototype.indexOf.call(wheel.children, row) * 44;
+    normalizeMobileWheelPosition(wheel);
     updateMobileWheelSelection(wheel);
   });
   return row;
 }
 
-function createMobileWheel(label, options, initialIndex) {
+function createMobileWheel(label, options, initialIndex, loop = false) {
   const wheel = document.createElement("div");
   wheel.className = `mobile-wheel-column${label === "日付" ? " mobile-wheel-date" : ""}`;
   wheel.setAttribute("role", "listbox");
   wheel.setAttribute("aria-label", label);
-  wheel.dataset.initialIndex = initialIndex;
+  wheel.dataset.initialIndex = loop ? options.length * 2 + initialIndex : initialIndex;
+  if (loop) wheel.dataset.loopLength = options.length;
 
   const fragment = document.createDocumentFragment();
-  options.forEach((option) => fragment.appendChild(createMobileWheelOption(wheel, option)));
+  for (let cycle = 0; cycle < (loop ? 5 : 1); cycle += 1) {
+    options.forEach((option) => fragment.appendChild(createMobileWheelOption(wheel, option)));
+  }
   wheel.appendChild(fragment);
-  wheel.addEventListener("scroll", () => updateMobileWheelSelection(wheel), {passive: true});
+  wheel.addEventListener("scroll", () => {
+    normalizeMobileWheelPosition(wheel);
+    updateMobileWheelSelection(wheel);
+  }, {passive: true});
   return wheel;
+}
+
+function normalizeMobileWheelPosition(wheel) {
+  const length = Number(wheel.dataset.loopLength);
+  if (!length) return;
+
+  const index = Math.round(wheel.scrollTop / 44);
+  if (index < length) {
+    wheel.scrollTop += length * 2 * 44;
+  } else if (index >= length * 4) {
+    wheel.scrollTop -= length * 2 * 44;
+  }
 }
 
 function selectedMobileWheelValue(wheel) {
