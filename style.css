@@ -101,6 +101,128 @@ button.full-width {
   width: 100%;
 }
 
+.mobile-datetime-trigger {
+  display: none;
+}
+
+.mobile-wheel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.mobile-wheel-panel {
+  width: 100%;
+  background: #fff;
+  border-radius: 18px 18px 0 0;
+  padding: 12px 12px env(safe-area-inset-bottom);
+}
+
+.mobile-wheel-title {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.mobile-wheel-columns {
+  position: relative;
+  display: flex;
+  height: 220px;
+  overflow: hidden;
+}
+
+.mobile-wheel-selection {
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  right: 0;
+  top: 88px;
+  height: 44px;
+  border-radius: 10px;
+  background: #e5e7eb;
+  pointer-events: none;
+}
+
+.mobile-wheel-column {
+  position: relative;
+  z-index: 1;
+  width: 22%;
+  height: 220px;
+  padding: 88px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-wheel-column::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-wheel-date {
+  width: 56%;
+}
+
+.mobile-wheel-option {
+  height: 44px;
+  line-height: 44px;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 19px;
+  color: #6b7280;
+  scroll-snap-align: center;
+}
+
+.mobile-wheel-option[aria-selected="true"] {
+  color: #111827;
+  font-weight: 700;
+}
+
+.mobile-wheel-actions {
+  display: flex;
+  border-top: 1px solid #d1d5db;
+  margin-top: 8px;
+}
+
+.mobile-wheel-actions button {
+  width: 50%;
+  background: transparent;
+  color: #2563eb;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.mobile-wheel-actions button + button {
+  border-left: 1px solid #d1d5db;
+}
+
+body.mobile-wheel-open {
+  overflow: hidden;
+}
+
+@media (max-width: 600px) and (pointer: coarse) {
+  input[type="datetime-local"].mobile-wheel-enabled {
+    display: none;
+  }
+
+  .mobile-datetime-trigger {
+    display: block;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #1f2937;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 400;
+  }
+}
+
 .error {
   min-height: 1.4em;
   margin: 12px 0 0;
@@ -246,7 +368,8 @@ button.full-width {
 }
 
 button.break-remove-btn,
-button.history-delete-btn {
+button.history-delete-btn,
+button.history-copy-btn {
   width: auto;
   min-height: 34px;
   padding: 6px 12px;
@@ -312,6 +435,12 @@ button.history-delete-btn {
 .history-item-header p {
   flex: 1;
   margin-top: 4px;
+}
+
+.history-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .history-item p {

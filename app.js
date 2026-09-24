@@ -14,6 +14,7 @@ const breakListElement = document.getElementById("breakList");
 const addBreakBtn = document.getElementById("addBreakBtn");
 
 const errorMessageElement = document.getElementById("errorMessage");
+const resultCardElement = document.getElementById("resultCard");
 const historyListElement = document.getElementById("historyList");
 const historyTotalPayElement = document.getElementById("historyTotalPay");
 
@@ -100,6 +101,8 @@ displayOptionInputs.forEach((input) => {
 });
 
 initializeDateTimes();
+enhanceMobileDateTime(startInput);
+enhanceMobileDateTime(endInput);
 loadDisplaySettings();
 applyResultVisibility();
 renderHistory();
@@ -139,6 +142,147 @@ function getDatePart(dateTimeValue) {
   return dateTimeValue.split("T")[0];
 }
 
+function enhanceMobileDateTime(input) {
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "mobile-datetime-trigger";
+  input.classList.add("mobile-wheel-enabled");
+  input.insertAdjacentElement("afterend", trigger);
+
+  const label = input.closest(".form-group").querySelector("label").textContent;
+  const refresh = () => {
+    const value = input.value;
+    const date = value ? new Date(value) : null;
+    const display = date && !Number.isNaN(date.getTime())
+      ? `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`
+      : "日時を選択";
+    trigger.textContent = display;
+    trigger.setAttribute("aria-label", `${label}: ${display}`);
+  };
+
+  input.addEventListener("input", refresh);
+  trigger.addEventListener("click", () => openMobileDateTimePicker(input, trigger, label));
+  refresh();
+}
+
+function openMobileDateTimePicker(input, trigger, label) {
+  const selected = input.value ? new Date(input.value) : new Date();
+  if (Number.isNaN(selected.getTime())) {
+    return;
+  }
+
+  const overlay = document.createElement("div");
+  overlay.className = "mobile-wheel-overlay";
+  overlay.innerHTML = `
+    <div class="mobile-wheel-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(label)}を選択">
+      <div class="mobile-wheel-title">${escapeHtml(label)}</div>
+      <div class="mobile-wheel-columns">
+        <div class="mobile-wheel-selection" aria-hidden="true"></div>
+      </div>
+      <div class="mobile-wheel-actions">
+        <button type="button" class="mobile-wheel-cancel">キャンセル</button>
+        <button type="button" class="mobile-wheel-done">完了</button>
+      </div>
+    </div>
+  `;
+
+  const columns = overlay.querySelector(".mobile-wheel-columns");
+  const dayOptions = [];
+  for (let offset = -365; offset <= 365; offset += 1) {
+    const date = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate() + offset);
+    dayOptions.push(mobileDayOption(date));
+  }
+
+  const days = createMobileWheel("日付", dayOptions, 365);
+  const hours = createMobileWheel("時", Array.from({length: 24}, (_, n) => ({value: String(n).padStart(2, "0"), label: String(n)})), selected.getHours());
+  const minutes = createMobileWheel("分", Array.from({length: 60}, (_, n) => ({value: String(n).padStart(2, "0"), label: String(n).padStart(2, "0")})), selected.getMinutes());
+  columns.append(days, hours, minutes);
+  document.body.appendChild(overlay);
+  document.body.classList.add("mobile-wheel-open");
+
+  for (const wheel of [days, hours, minutes]) {
+    wheel.scrollTop = Number(wheel.dataset.initialIndex) * 44;
+    updateMobileWheelSelection(wheel);
+  }
+
+  const close = () => {
+    document.removeEventListener("keydown", onKeydown);
+    overlay.remove();
+    document.body.classList.remove("mobile-wheel-open");
+    trigger.focus();
+  };
+  const onKeydown = (event) => {
+    if (event.key === "Escape") {
+      close();
+    }
+  };
+  document.addEventListener("keydown", onKeydown);
+  overlay.addEventListener("click", (event) => {
+    if (event.target === overlay) close();
+  });
+  overlay.querySelector(".mobile-wheel-cancel").addEventListener("click", close);
+  overlay.querySelector(".mobile-wheel-done").addEventListener("click", () => {
+    const day = selectedMobileWheelValue(days);
+    const hour = selectedMobileWheelValue(hours);
+    const minute = selectedMobileWheelValue(minutes);
+    input.value = `${day}T${hour}:${minute}`;
+    input.dispatchEvent(new Event("input", {bubbles: true}));
+    input.dispatchEvent(new Event("change", {bubbles: true}));
+    close();
+  });
+  overlay.querySelector(".mobile-wheel-done").focus();
+}
+
+function mobileDayOption(date) {
+  const today = new Date();
+  const dayLabel = `${date.getMonth() + 1}月${date.getDate()}日 ${["日", "月", "火", "水", "木", "金", "土"][date.getDay()]}`;
+  return {
+    value: getDatePart(toDateTimeLocalValue(date)),
+    label: date.toDateString() === today.toDateString() ? `今日 (${dayLabel})` : dayLabel
+  };
+}
+
+function createMobileWheelOption(wheel, option) {
+  const row = document.createElement("div");
+  row.className = "mobile-wheel-option";
+  row.setAttribute("role", "option");
+  row.dataset.value = option.value;
+  row.textContent = option.label;
+  row.addEventListener("click", () => {
+    wheel.scrollTop = Array.prototype.indexOf.call(wheel.children, row) * 44;
+    updateMobileWheelSelection(wheel);
+  });
+  return row;
+}
+
+function createMobileWheel(label, options, initialIndex) {
+  const wheel = document.createElement("div");
+  wheel.className = `mobile-wheel-column${label === "日付" ? " mobile-wheel-date" : ""}`;
+  wheel.setAttribute("role", "listbox");
+  wheel.setAttribute("aria-label", label);
+  wheel.dataset.initialIndex = initialIndex;
+
+  const fragment = document.createDocumentFragment();
+  options.forEach((option) => fragment.appendChild(createMobileWheelOption(wheel, option)));
+  wheel.appendChild(fragment);
+  wheel.addEventListener("scroll", () => updateMobileWheelSelection(wheel), {passive: true});
+  return wheel;
+}
+
+function selectedMobileWheelValue(wheel) {
+  const index = Math.max(0, Math.min(wheel.children.length - 1, Math.round(wheel.scrollTop / 44)));
+  return wheel.children[index].dataset.value;
+}
+
+function updateMobileWheelSelection(wheel) {
+  const index = Math.max(0, Math.min(wheel.children.length - 1, Math.round(wheel.scrollTop / 44)));
+  const previous = wheel.querySelector('[aria-selected="true"]');
+  if (previous !== wheel.children[index]) {
+    if (previous) previous.setAttribute("aria-selected", "false");
+    wheel.children[index].setAttribute("aria-selected", "true");
+  }
+}
+
 function handleBreakEnabledChange() {
   const enabled = breakEnabledInput.value === "yes";
   breakSectionElement.hidden = !enabled;
@@ -172,6 +316,9 @@ function addBreakRow(startValue = "", endValue = "") {
       <input type="datetime-local" class="break-end" value="${escapeHtml(endValue)}">
     </div>
   `;
+
+  enhanceMobileDateTime(row.querySelector(".break-start"));
+  enhanceMobileDateTime(row.querySelector(".break-end"));
 
   row.querySelector(".break-remove-btn").addEventListener("click", () => {
     row.remove();
@@ -424,6 +571,8 @@ function calculate() {
 
   applyResultVisibility();
 
+  resultCardElement.hidden = false;
+
   saveHistory({
     version: 2,
     start: start.toISOString(),
@@ -548,6 +697,67 @@ function formatDateTime(value) {
   }).format(date);
 }
 
+function formatHistoryCopyRow(item) {
+  const start = new Date(item.start);
+  const end = new Date(item.end);
+  const datePart = (date) =>
+    `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+  const timePart = (date) =>
+    `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
+  const workMinutes = item.totalWorkMinutes ?? (Number(item.totalHours) || 0) * 60;
+  const hours = Math.floor(Math.round(workMinutes) / 60);
+  const minutes = Math.round(workMinutes) % 60;
+
+  return [
+    datePart(start),
+    timePart(start),
+    datePart(end),
+    timePart(end),
+    `${hours}:${String(minutes).padStart(2, "0")}`,
+    `${formatYen(item.dailyPay)}円`
+  ].join("\t");
+}
+
+async function copyHistoryItem(index, button) {
+  const item = getHistory()[index];
+
+  if (!item) {
+    return;
+  }
+
+  const value = formatHistoryCopyRow(item);
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+    } else {
+      const field = document.createElement("textarea");
+      field.value = value;
+      field.setAttribute("readonly", "");
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+      try {
+        if (!document.execCommand("copy")) {
+          throw new Error("Copy failed");
+        }
+      } finally {
+        field.remove();
+      }
+    }
+
+    button.textContent = "コピー済み";
+    window.setTimeout(() => {
+      if (button.isConnected) {
+        button.textContent = "コピー";
+      }
+    }, 2000);
+  } catch {
+    alert("コピーできませんでした。ブラウザのクリップボード設定を確認してください。");
+  }
+}
+
 function saveHistory(item) {
   const history = getHistory();
 
@@ -596,13 +806,18 @@ function renderHistory() {
       <article class="history-item">
         <div class="history-item-header">
           <p>${escapeHtml(formatDateTime(item.start))} ～ ${escapeHtml(formatDateTime(item.end))}</p>
-          <button
-            type="button"
-            class="history-delete-btn"
-            data-history-index="${index}"
-            aria-label="この履歴を削除">
-            削除
-          </button>
+          <div class="history-actions">
+            <button
+              type="button"
+              class="history-copy-btn"
+              data-history-index="${index}"
+              aria-label="この履歴をコピー">コピー</button>
+            <button
+              type="button"
+              class="history-delete-btn"
+              data-history-index="${index}"
+              aria-label="この履歴を削除">削除</button>
+          </div>
         </div>
         <p>時給 ${formatYen(item.hourlyWage)}円 / 残業 +${item.overtimeRate}% / 深夜 +${item.nightRate}%</p>
         ${detail}
@@ -615,6 +830,12 @@ function renderHistory() {
     button.addEventListener("click", () => {
       const index = Number(button.dataset.historyIndex);
       deleteHistoryItem(index);
+    });
+  });
+
+  document.querySelectorAll(".history-copy-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      copyHistoryItem(Number(button.dataset.historyIndex), button);
     });
   });
 }
