@@ -332,6 +332,7 @@ body.mobile-wheel-open {
 
 .result-row {
   display: flex;
+  margin: 0;
   justify-content: space-between;
   gap: 16px;
   padding: 10px 0;
