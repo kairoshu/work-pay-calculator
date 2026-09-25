@@ -1,3 +1,4 @@
+/* HTML の hidden 属性を優先し、ほかの display 指定で再表示されないようにする。 */
 [hidden] {
   display: none !important;
 }
@@ -17,6 +18,7 @@ body {
   background: #f3f4f6;
 }
 
+/* ページ幅とカードの共通レイアウト。 */
 .container {
   width: min(100% - 24px, 640px);
   margin: 0 auto;
@@ -41,6 +43,115 @@ h1 {
   margin-bottom: 22px;
 }
 
+/* タイトル横の案内ボタンと、利用前に読んでほしい注意書き。 */
+.app-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.app-heading h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.app-info-actions {
+  display: flex;
+  gap: 6px;
+}
+
+button.secondary.app-info-button {
+  min-height: 32px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.read-caution {
+  margin: 0 0 8px;
+  color: #b91c1c;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* 使い方・注意事項の大きめの画面。本文だけをスクロールさせる。 */
+.info-dialog {
+  width: min(92vw, 620px);
+  max-height: 85vh;
+  max-height: 85dvh;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.24);
+  color: #1f2937;
+}
+
+.info-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-dialog::backdrop {
+  background: rgba(17, 24, 39, 0.58);
+}
+
+.info-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.info-dialog-header h2 {
+  margin: 0;
+}
+
+button.info-dialog-x {
+  flex: 0 0 34px;
+  width: 34px;
+  min-height: 34px;
+  padding: 0;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.info-dialog-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 22px 22px;
+  line-height: 1.7;
+}
+
+.info-dialog-body h3 {
+  margin: 20px 0 8px;
+  font-size: 16px;
+}
+
+.info-dialog-body ul {
+  margin: 0;
+  padding-left: 1.35em;
+}
+
+.info-dialog-body li {
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+}
+
+.info-dialog-body .info-warning {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+button.info-dialog-close {
+  margin-top: 24px;
+}
+
 .datetime-label-row {
   display: flex;
   align-items: center;
@@ -56,6 +167,25 @@ h1 {
   display: none;
 }
 
+/* 残業・深夜・休憩の見出しを押すと、各入力欄を開閉する。 */
+.input-label-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 7px;
+}
+
+.input-label-toggle {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-height: 28px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  text-align: left;
+}
+
 h2 {
   font-size: 19px;
   margin-bottom: 16px;
@@ -67,8 +197,12 @@ h2 {
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.form-row > .form-group {
+  min-width: 0;
 }
 
 label {
@@ -116,6 +250,7 @@ button.full-width {
   width: 100%;
 }
 
+/* スクロール日時入力の画面。PC ではこのボタンを非表示にする。 */
 .mobile-datetime-trigger {
   display: none;
 }
@@ -150,6 +285,7 @@ button.full-width {
   overflow: hidden;
 }
 
+/* 3 列の中央に重ねる選択位置。行の高さは app.js の 44px と共通。 */
 .mobile-wheel-selection {
   position: absolute;
   z-index: 0;
@@ -220,6 +356,7 @@ body.mobile-wheel-open {
   overflow: hidden;
 }
 
+/* タッチ操作のスマホだけ、日時入力とモード切り替えを有効にする。 */
 @media (max-width: 600px) and (pointer: coarse) {
   .datetime-mode-toggle {
     display: block;
@@ -249,6 +386,7 @@ body.mobile-wheel-open {
     font-weight: 400;
   }
 
+  /* カレンダーモードは見た目だけ共通ボタンにし、透明な標準入力欄でタップを受ける。 */
   .mobile-datetime-field {
     position: relative;
   }
@@ -319,6 +457,7 @@ body.mobile-wheel-open {
   padding: 0;
 }
 
+/* 計算結果。各行は dt=項目名、dd=値。色は勤務区分ごとに切り替える。 */
 .result-list {
   margin: 0;
 }
@@ -395,6 +534,7 @@ body.mobile-wheel-open {
   font-size: 30px;
 }
 
+/* 休憩行は app.js で必要な数だけ生成する。 */
 .break-section {
   margin-bottom: 16px;
 }
@@ -427,6 +567,7 @@ button.history-copy-btn {
   border-radius: 8px;
 }
 
+/* 履歴合計と履歴一覧。コピー・削除ボタンは各履歴の右側に置く。 */
 .history-total-card {
   padding-top: 16px;
   padding-bottom: 16px;
@@ -504,6 +645,18 @@ button.history-copy-btn {
   color: #6b7280;
 }
 
+/* 履歴欄の下に置く問い合わせ先へのメールリンク。 */
+.contact-link {
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+.contact-link a {
+  color: #2563eb;
+}
+
+/* 狭い画面では表示設定のみを縦並びにする。 */
 @media (max-width: 520px) {
   .display-settings-grid {
     grid-template-columns: 1fr;
@@ -511,13 +664,17 @@ button.history-copy-btn {
 }
 
 @media (max-width: 420px) {
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-
   .card {
     padding: 16px;
+  }
+
+  .app-heading h1 {
+    font-size: 18px;
+  }
+
+  button.secondary.app-info-button {
+    padding: 0 6px;
+    font-size: 12px;
   }
 
   .pay strong {

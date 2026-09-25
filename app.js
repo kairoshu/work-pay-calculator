@@ -1,8 +1,10 @@
+// 保存キーは既存の履歴・表示設定を読み続けるため変更しない。
 const STORAGE_KEY = "workPayHistoryV1";
 const DISPLAY_SETTINGS_KEY = "workPayDisplaySettingsV1";
 const MINUTE_MS = 60 * 1000;
 const REGULAR_LIMIT_MINUTES = 8 * 60;
 
+// 入力欄・結果欄の id は index.html と対応する。
 const startInput = document.getElementById("startDateTime");
 const endInput = document.getElementById("endDateTime");
 const hourlyWageInput = document.getElementById("hourlyWage");
@@ -13,6 +15,8 @@ const breakSectionElement = document.getElementById("breakSection");
 const breakListElement = document.getElementById("breakList");
 const addBreakBtn = document.getElementById("addBreakBtn");
 const dateTimeModeToggle = document.getElementById("dateTimeModeToggle");
+const collapseToggles = [...document.querySelectorAll(".input-label-toggle")];
+const breakCollapseToggle = document.querySelector('[data-collapse-target="breakEnabled"]');
 
 const errorMessageElement = document.getElementById("errorMessage");
 const resultCardElement = document.getElementById("resultCard");
@@ -23,6 +27,7 @@ const displaySettingsBtn = document.getElementById("displaySettingsBtn");
 const displaySettingsPanel = document.getElementById("displaySettingsPanel");
 const displayOptionInputs = [...document.querySelectorAll("[data-display-key]")];
 
+// 計算結果の書き込み先。項目を増減する場合は HTML の id とあわせて確認する。
 const resultElements = {
   boundTime: document.getElementById("boundTime"),
   totalWork: document.getElementById("totalWork"),
@@ -50,6 +55,7 @@ document.querySelectorAll("[data-result-key]").forEach((element) => {
   resultRows[element.dataset.resultKey] = element;
 });
 
+// 最後に計算した結果を保持し、表示設定を切り替えたときに表示条件を再判定する。
 let lastVisibilityContext = {
   hasBreaks: false,
   categoryWork: {
@@ -62,6 +68,18 @@ let lastVisibilityContext = {
 
 document.getElementById("calculateBtn").addEventListener("click", calculate);
 document.getElementById("clearAllHistoryBtn").addEventListener("click", clearAllHistory);
+// 使い方・注意事項は別々のダイアログを開き、右上と本文末尾のボタンで閉じる。
+document.querySelectorAll("[data-info-dialog]").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.getElementById(button.dataset.infoDialog).showModal();
+  });
+});
+document.querySelectorAll("[data-close-dialog]").forEach((button) => {
+  button.addEventListener("click", () => {
+    button.closest("dialog").close();
+  });
+});
+// 入力モードは body のクラスで一括切り替え。日時の値自体は両モードで共有する。
 dateTimeModeToggle.addEventListener("click", () => {
   const calendarMode = document.body.classList.toggle("calendar-input-mode");
   const nextMode = calendarMode ? "スクロール入力" : "カレンダー入力";
@@ -69,7 +87,21 @@ dateTimeModeToggle.addEventListener("click", () => {
   dateTimeModeToggle.setAttribute("aria-label", `${nextMode}に切り替え`);
   dateTimeModeToggle.title = `${nextMode}に切り替え`;
 });
+// 見出しの文字を押して開閉する。入力値は消さず、計算時もそのまま読み取る。
+collapseToggles.forEach((toggle) => {
+  const input = document.getElementById(toggle.dataset.collapseTarget);
+  toggle.addEventListener("click", () => {
+    const expanded = toggle.getAttribute("aria-expanded") !== "true";
+    input.hidden = !expanded;
+    toggle.setAttribute("aria-expanded", String(expanded));
+
+    if (input === breakEnabledInput) {
+      breakSectionElement.hidden = !expanded || breakEnabledInput.value !== "yes";
+    }
+  });
+});
 breakEnabledInput.addEventListener("change", handleBreakEnabledChange);
+// 追加する休憩には、直前の休憩（初回は勤務開始日）の日付を引き継ぐ。
 addBreakBtn.addEventListener("click", () => {
   const rows = [...breakListElement.querySelectorAll(".break-row")];
 
@@ -108,6 +140,7 @@ displayOptionInputs.forEach((input) => {
   });
 });
 
+// 初期日時、スマホ用入力欄、保存済み設定・履歴を読み込む。
 initializeDateTimes();
 enhanceMobileDateTime(startInput);
 enhanceMobileDateTime(endInput);
@@ -116,6 +149,7 @@ loadDisplaySettings();
 applyResultVisibility();
 renderHistory();
 
+// 初期値は開始を現在時刻から5分単位に切り上げ、終了を8時間後にする。
 function initializeDateTimes() {
   const now = new Date();
   const start = roundToFiveMinutes(now);
@@ -151,6 +185,8 @@ function getDatePart(dateTimeValue) {
   return dateTimeValue.split("T")[0];
 }
 
+// 標準の日時入力欄とスクロール用の表示ボタンを同じ枠にまとめる。
+// カレンダーモードでも表示文字列はこのボタンで統一し、標準入力欄でタップを受ける。
 function enhanceMobileDateTime(input) {
   const trigger = document.createElement("button");
   trigger.type = "button";
@@ -177,6 +213,7 @@ function enhanceMobileDateTime(input) {
   refresh();
 }
 
+// 日付・時・分の3列を持つスマホ用のスクロール選択画面を開く。
 function openMobileDateTimePicker(input, trigger, label) {
   const selected = input.value ? new Date(input.value) : new Date();
   if (Number.isNaN(selected.getTime())) {
@@ -199,6 +236,7 @@ function openMobileDateTimePicker(input, trigger, label) {
   `;
 
   const columns = overlay.querySelector(".mobile-wheel-columns");
+  // 日付だけは現在選択中の日を中心に前後365日まで。時・分は別々に循環させる。
   const dayOptions = [];
   for (let offset = -365; offset <= 365; offset += 1) {
     const date = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate() + offset);
@@ -233,6 +271,7 @@ function openMobileDateTimePicker(input, trigger, label) {
     if (event.target === overlay) close();
   });
   overlay.querySelector(".mobile-wheel-cancel").addEventListener("click", close);
+  // 時・分をループしても日付や他の列は繰り上げ・繰り下げしない。
   overlay.querySelector(".mobile-wheel-done").addEventListener("click", () => {
     const day = selectedMobileWheelValue(days);
     const hour = selectedMobileWheelValue(hours);
@@ -268,6 +307,7 @@ function createMobileWheelOption(wheel, option) {
   return row;
 }
 
+// 時・分だけ選択肢を複製し、端に達しても連続して回せるようにする。
 function createMobileWheel(label, options, initialIndex, loop = false) {
   const wheel = document.createElement("div");
   wheel.className = `mobile-wheel-column${label === "日付" ? " mobile-wheel-date" : ""}`;
@@ -288,6 +328,7 @@ function createMobileWheel(label, options, initialIndex, loop = false) {
   return wheel;
 }
 
+// 複製した列の端に近づいたら、同じ値の中央側へスクロール位置を戻す。
 function normalizeMobileWheelPosition(wheel) {
   const length = Number(wheel.dataset.loopLength);
   if (!length) return;
@@ -314,9 +355,10 @@ function updateMobileWheelSelection(wheel) {
   }
 }
 
+// 「休憩あり」を選んだときは、勤務開始日を使った入力行を1件用意する。
 function handleBreakEnabledChange() {
   const enabled = breakEnabledInput.value === "yes";
-  breakSectionElement.hidden = !enabled;
+  breakSectionElement.hidden = !enabled || breakCollapseToggle.getAttribute("aria-expanded") !== "true";
 
   if (enabled && breakListElement.children.length === 0) {
     const baseDate = getDatePart(startInput.value);
@@ -327,6 +369,7 @@ function handleBreakEnabledChange() {
   }
 }
 
+// 休憩行は動的に生成するため、日時入力の表示切り替えも各行に設定する。
 function addBreakRow(startValue = "", endValue = "") {
   const row = document.createElement("div");
   row.className = "break-row";
@@ -366,6 +409,7 @@ function addBreakRow(startValue = "", endValue = "") {
   breakListElement.appendChild(row);
 }
 
+// 休憩の入力漏れ、勤務時間外、1分未満の端数、休憩同士の重複を確認する。
 function getBreaksFromForm(workStart, workEnd) {
   if (breakEnabledInput.value !== "yes") {
     return [];
@@ -419,6 +463,7 @@ function isWholeMinute(date) {
   return date.getSeconds() === 0 && date.getMilliseconds() === 0;
 }
 
+// 深夜割増の対象は22:00以上、または翌朝5:00より前の分。
 function isNightMinute(date) {
   const hour = date.getHours();
   return hour >= 22 || hour < 5;
@@ -439,6 +484,8 @@ function emptyCategory() {
   };
 }
 
+// 1分ごとに通常・残業・深夜・残業＋深夜へ振り分ける。
+// 残業判定の8時間は休憩を除いた勤務分数で数える。
 function classifyShift(start, end, breaks) {
   const totalMinutes = Math.round((end - start) / MINUTE_MS);
   const categories = {
@@ -467,6 +514,7 @@ function classifyShift(start, end, breaks) {
       key = "night";
     }
 
+    // 休憩中も拘束時間に含め、賃金対象の勤務分数からだけ除く。
     categories[key].grossMinutes += 1;
 
     if (onBreak) {
@@ -485,6 +533,7 @@ function classifyShift(start, end, breaks) {
   };
 }
 
+// 入力確認 → 分単位の区分判定 → 日当算出 → 結果表示・履歴保存。
 function calculate() {
   errorMessageElement.textContent = "";
 
@@ -548,6 +597,7 @@ function calculate() {
   const regularRate = hourlyWage;
   const overtimeHourlyRate = hourlyWage * (1 + overtimeRate / 100);
   const nightHourlyRate = hourlyWage * (1 + nightRate / 100);
+  // 残業＋深夜は割増率を足す。割増同士を掛け算しない。
   const overtimeNightHourlyRate =
     hourlyWage * (1 + (overtimeRate + nightRate) / 100);
 
@@ -557,6 +607,7 @@ function calculate() {
     minutesToHours(result.categories.night.workMinutes) * nightHourlyRate +
     minutesToHours(result.categories.overtimeNight.workMinutes) * overtimeNightHourlyRate;
 
+  // 日当は各区分を合算してから、1円未満を切り捨てる。
   const dailyPay = Math.floor(dailyPayRaw);
 
   resultElements.boundTime.textContent = formatMinutes(result.boundMinutes);
@@ -602,6 +653,7 @@ function calculate() {
 
   applyResultVisibility();
 
+  // 初回起動時は非表示の結果欄を、計算成功時だけ表示する。
   resultCardElement.hidden = false;
 
   saveHistory({
@@ -626,6 +678,7 @@ function calculate() {
   renderHistory();
 }
 
+// 項目の表示設定は履歴とは別のキーで保存する。
 function loadDisplaySettings() {
   const settings = getDisplaySettings();
 
@@ -660,6 +713,7 @@ function isDisplayEnabled(key) {
   return !input || input.checked;
 }
 
+// ユーザー設定に加え、休憩なしの項目や勤務がない区分の時給を隠す。
 function applyResultVisibility() {
   const breakOnlyKeys = new Set([
     "boundTime",
@@ -728,6 +782,7 @@ function formatDateTime(value) {
   }).format(date);
 }
 
+// Excel に貼りやすいよう、開始日・時刻、終了日・時刻、勤務時間、日当をタブ区切りにする。
 function formatHistoryCopyRow(item) {
   const start = new Date(item.start);
   const end = new Date(item.end);
@@ -749,6 +804,7 @@ function formatHistoryCopyRow(item) {
   ].join("\t");
 }
 
+// コピー機能が使えない環境では選択済みテキストのコピーに切り替える。
 async function copyHistoryItem(index, button) {
   const item = getHistory()[index];
 
@@ -789,6 +845,7 @@ async function copyHistoryItem(index, button) {
   }
 }
 
+// 新しい履歴を先頭に追加し、保存件数は最大100件に制限する。
 function saveHistory(item) {
   const history = getHistory();
 
@@ -815,6 +872,7 @@ function getHistory() {
   }
 }
 
+// 保存済み履歴から合計と一覧を再描画し、各行のコピー・削除を結び直す。
 function renderHistory() {
   const history = getHistory();
 
@@ -871,6 +929,7 @@ function renderHistory() {
   });
 }
 
+// 新しい履歴形式（version 2）と、以前の履歴形式の両方を表示する。
 function buildHistoryDetail(item) {
   if (item.version === 2 && item.categories) {
     const c = item.categories;
@@ -937,6 +996,7 @@ function showError(message) {
   errorMessageElement.textContent = message;
 }
 
+// innerHTML に差し込む履歴や日時の文字列を HTML として解釈させない。
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")

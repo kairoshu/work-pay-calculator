@@ -8,12 +8,21 @@
 </head>
 <body>
   <main class="container">
+    <!-- 入力欄。日時入力のモード切り替えは app.js、スマホでの表示切り替えは style.css が担当します。 -->
     <section class="card">
-      <h1>勤務日当計算_v1.2</h1>
+      <div class="app-heading">
+        <h1>勤務日当計算_v1.2</h1>
+        <div class="app-info-actions">
+          <button type="button" class="secondary app-info-button" data-info-dialog="usageDialog">使い方</button>
+          <button type="button" class="secondary app-info-button" data-info-dialog="cautionDialog">注意事項</button>
+        </div>
+      </div>
+      <p class="read-caution">※利用前に注意事項を確認してください</p>
 
       <div class="form-group">
         <div class="datetime-label-row">
           <label for="startDateTime">勤務開始日時</label>
+          <!-- スマホだけに表示。勤務日時と休憩日時をまとめて切り替えます。 -->
           <button id="dateTimeModeToggle" type="button" class="datetime-mode-toggle" aria-label="カレンダー入力に切り替え" title="カレンダー入力に切り替え" hidden>📅</button>
         </div>
         <input type="datetime-local" id="startDateTime">
@@ -31,24 +40,31 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label for="overtimeRate">残業 ＋％</label>
-          <input type="number" id="overtimeRate" inputmode="decimal" min="0" step="0.1" value="25">
+          <div class="input-label-row">
+            <button type="button" class="input-label-toggle" data-collapse-target="overtimeRate" aria-controls="overtimeRate" aria-expanded="true">残業 ＋％</button>
+          </div>
+          <input type="number" id="overtimeRate" aria-label="残業 ＋％" inputmode="decimal" min="0" step="0.1" value="25">
         </div>
 
         <div class="form-group">
-          <label for="nightRate">深夜 ＋％</label>
-          <input type="number" id="nightRate" inputmode="decimal" min="0" step="0.1" value="25">
+          <div class="input-label-row">
+            <button type="button" class="input-label-toggle" data-collapse-target="nightRate" aria-controls="nightRate" aria-expanded="true">深夜 ＋％</button>
+          </div>
+          <input type="number" id="nightRate" aria-label="深夜 ＋％" inputmode="decimal" min="0" step="0.1" value="25">
         </div>
       </div>
 
       <div class="form-group">
-        <label for="breakEnabled">休憩</label>
-        <select id="breakEnabled">
+        <div class="input-label-row">
+          <button type="button" class="input-label-toggle" data-collapse-target="breakEnabled" aria-controls="breakEnabled breakSection" aria-expanded="true">休憩</button>
+        </div>
+        <select id="breakEnabled" aria-label="休憩">
           <option value="no" selected>なし</option>
           <option value="yes">あり</option>
         </select>
       </div>
 
+      <!-- 「休憩あり」で表示。休憩の入力行は app.js が追加します。 -->
       <div id="breakSection" class="break-section" hidden>
         <p class="break-note">休憩の日付は自動入力されます。必要な場合だけ日付を変更してください。</p>
         <div id="breakList"></div>
@@ -59,12 +75,14 @@
       <p id="errorMessage" class="error" aria-live="polite"></p>
     </section>
 
+    <!-- 初回は非表示。計算が成功したときに app.js が表示します。 -->
     <section id="resultCard" class="card result-card" hidden>
       <div class="result-header">
         <h2>計算結果</h2>
         <button id="displaySettingsBtn" type="button" class="secondary">表示項目</button>
       </div>
 
+      <!-- data-display-key と結果行の data-result-key は同じ項目名で対応します。 -->
       <div id="displaySettingsPanel" class="display-settings-panel" hidden>
         <div class="display-settings-grid">
           <label class="display-option"><input type="checkbox" data-display-key="boundTime" checked>総拘束時間</label>
@@ -89,106 +107,109 @@
         </div>
       </div>
 
+      <!-- 各 result-row は項目名(dt)と計算値(dd)の組。id は app.js の出力先です。 -->
       <div class="result-list">
-        <div class="result-block result-block-summary">
-          <dl class="result-row" id="boundTimeRow" data-result-key="boundTime">
-            <dt>総拘束時間</dt>
-            <dd id="boundTime">-</dd>
-          </dl>
+          <div class="result-block result-block-summary">
+              <dl class="result-row" id="boundTimeRow" data-result-key="boundTime">
+                  <dt>総拘束時間</dt>
+                  <dd id="boundTime">-</dd>
+              </dl>
 
-          <dl class="result-row" id="totalWorkRow" data-result-key="totalWork">
-            <dt>総勤務時間</dt>
-            <dd id="totalWork">-</dd>
-          </dl>
-        </div>
+              <dl class="result-row" id="totalWorkRow" data-result-key="totalWork">
+                  <dt>総勤務時間</dt>
+                  <dd id="totalWork">-</dd>
+              </dl>
+          </div>
 
-        <div class="result-block result-block-regular">
-          <dl class="result-row" id="regularTimeRow" data-result-key="regularTime">
-            <dt>通常時間</dt>
-            <dd id="regularTime">-</dd>
-          </dl>
+          <!-- 各並び順は以下で操作。 -->
+          <div class="result-block result-block-regular">
+              <dl class="result-row" id="regularTimeRow" data-result-key="regularTime">
+                  <dt>通常時間</dt>
+                  <dd id="regularTime">-</dd>
+              </dl>
 
-          <dl class="result-row" id="regularBreakRow" data-result-key="regularBreak">
-            <dt>通常休憩時間</dt>
-            <dd id="regularBreak">-</dd>
-          </dl>
+              <dl class="result-row" id="regularBreakRow" data-result-key="regularBreak">
+                  <dt>通常休憩時間</dt>
+                  <dd id="regularBreak">-</dd>
+              </dl>
 
-          <dl class="result-row" id="regularRateRow" data-result-key="regularRate">
-            <dt>通常時給</dt>
-            <dd id="regularRate">-</dd>
-          </dl>
+              <dl class="result-row" id="regularRateRow" data-result-key="regularRate">
+                  <dt>通常時給</dt>
+                  <dd id="regularRate">-</dd>
+              </dl>
 
-          <dl class="result-row" id="regularWorkRow" data-result-key="regularWork">
-            <dt>通常総勤務時間</dt>
-            <dd id="regularWork">-</dd>
-          </dl>
-        </div>
+              <dl class="result-row" id="regularWorkRow" data-result-key="regularWork">
+                  <dt>通常総勤務時間</dt>
+                  <dd id="regularWork">-</dd>
+              </dl>
+          </div>
 
-        <div class="result-block result-block-overtime">
-          <dl class="result-row" id="overtimeTimeRow" data-result-key="overtimeTime">
-            <dt>残業時間</dt>
-            <dd id="overtimeTime">-</dd>
-          </dl>
+          <div class="result-block result-block-overtime">
+              <dl class="result-row" id="overtimeTimeRow" data-result-key="overtimeTime">
+                  <dt>残業時間</dt>
+                  <dd id="overtimeTime">-</dd>
+              </dl>
 
-          <dl class="result-row" id="overtimeBreakRow" data-result-key="overtimeBreak">
-            <dt>残業休憩時間</dt>
-            <dd id="overtimeBreak">-</dd>
-          </dl>
+              <dl class="result-row" id="overtimeBreakRow" data-result-key="overtimeBreak">
+                  <dt>残業休憩時間</dt>
+                  <dd id="overtimeBreak">-</dd>
+              </dl>
 
-          <dl class="result-row" id="overtimeWorkRow" data-result-key="overtimeWork">
-            <dt>残業総勤務時間</dt>
-            <dd id="overtimeWork">-</dd>
-          </dl>
+              <dl class="result-row" id="overtimeRateRow" data-result-key="overtimeRate">
+                  <dt>残業時給</dt>
+                  <dd id="overtimeRateResult">-</dd>
+              </dl>
 
-          <dl class="result-row" id="overtimeRateRow" data-result-key="overtimeRate">
-            <dt>残業時給</dt>
-            <dd id="overtimeRateResult">-</dd>
-          </dl>
-        </div>
+              <dl class="result-row" id="overtimeWorkRow" data-result-key="overtimeWork">
+                  <dt>残業総勤務時間</dt>
+                  <dd id="overtimeWork">-</dd>
+              </dl>
 
-        <div class="result-block result-block-night">
-          <dl class="result-row" id="nightTimeRow" data-result-key="nightTime">
-            <dt>深夜時間</dt>
-            <dd id="nightTime">-</dd>
-          </dl>
+          </div>
 
-          <dl class="result-row" id="nightBreakRow" data-result-key="nightBreak">
-            <dt>深夜休憩時間</dt>
-            <dd id="nightBreak">-</dd>
-          </dl>
+          <div class="result-block result-block-night">
+              <dl class="result-row" id="nightTimeRow" data-result-key="nightTime">
+                  <dt>深夜時間</dt>
+                  <dd id="nightTime">-</dd>
+              </dl>
 
-          <dl class="result-row" id="nightWorkRow" data-result-key="nightWork">
-            <dt>深夜総勤務時間</dt>
-            <dd id="nightWork">-</dd>
-          </dl>
+              <dl class="result-row" id="nightBreakRow" data-result-key="nightBreak">
+                  <dt>深夜休憩時間</dt>
+                  <dd id="nightBreak">-</dd>
+              </dl>
 
-          <dl class="result-row" id="nightRateRow" data-result-key="nightRate">
-            <dt>深夜時給</dt>
-            <dd id="nightRateResult">-</dd>
-          </dl>
-        </div>
+              <dl class="result-row" id="nightRateRow" data-result-key="nightRate">
+                  <dt>深夜時給</dt>
+                  <dd id="nightRateResult">-</dd>
+              </dl>
 
-        <div class="result-block result-block-overtime-night">
-          <dl class="result-row" id="overtimeNightTimeRow" data-result-key="overtimeNightTime">
-            <dt>残業＋深夜の重複時間</dt>
-            <dd id="overtimeNightTime">-</dd>
-          </dl>
+              <dl class="result-row" id="nightWorkRow" data-result-key="nightWork">
+                  <dt>深夜総勤務時間</dt>
+                  <dd id="nightWork">-</dd>
+              </dl>
+          </div>
 
-          <dl class="result-row" id="overtimeNightRateRow" data-result-key="overtimeNightRate">
-            <dt>残業＋深夜時給</dt>
-            <dd id="overtimeNightRateResult">-</dd>
-          </dl>
+          <div class="result-block result-block-overtime-night">
+              <dl class="result-row" id="overtimeNightTimeRow" data-result-key="overtimeNightTime">
+                  <dt>残業＋深夜の重複時間</dt>
+                  <dd id="overtimeNightTime">-</dd>
+              </dl>
 
-          <dl class="result-row" id="overtimeNightBreakRow" data-result-key="overtimeNightBreak">
-            <dt>残業＋深夜休憩時間</dt>
-            <dd id="overtimeNightBreak">-</dd>
-          </dl>
+              <dl class="result-row" id="overtimeNightRateRow" data-result-key="overtimeNightRate">
+                  <dt>残業＋深夜時給</dt>
+                  <dd id="overtimeNightRateResult">-</dd>
+              </dl>
 
-          <dl class="result-row" id="overtimeNightWorkRow" data-result-key="overtimeNightWork">
-            <dt>残業＋深夜総勤務時間</dt>
-            <dd id="overtimeNightWork">-</dd>
-          </dl>
-        </div>
+              <dl class="result-row" id="overtimeNightBreakRow" data-result-key="overtimeNightBreak">
+                  <dt>残業＋深夜休憩時間</dt>
+                  <dd id="overtimeNightBreak">-</dd>
+              </dl>
+
+              <dl class="result-row" id="overtimeNightWorkRow" data-result-key="overtimeNightWork">
+                  <dt>残業＋深夜総勤務時間</dt>
+                  <dd id="overtimeNightWork">-</dd>
+              </dl>
+          </div>
       </div>
 
       <div id="dailyPayRow" class="pay" data-result-key="dailyPay">
@@ -197,6 +218,7 @@
       </div>
     </section>
 
+    <!-- 保存済み履歴の合計金額。個々の勤務の日当とは別です。 -->
     <section class="card history-total-card">
       <div class="history-total">
         <span>履歴合計</span>
@@ -204,6 +226,7 @@
       </div>
     </section>
 
+    <!-- 履歴一覧は app.js が更新し、各履歴のコピーと削除もここに追加します。 -->
     <section class="card">
       <div class="history-header">
         <h2>計算履歴</h2>
@@ -214,7 +237,91 @@
         <p class="empty">履歴はありません。</p>
       </div>
     </section>
+
+    <!-- メール作成画面を開く。実際の送信は利用者がメールアプリで行う。 -->
+    <p class="contact-link">
+      <a href="mailto:droppostthird@gmail.com?subject=%E5%8B%A4%E5%8B%99%E6%97%A5%E5%BD%93%E8%A8%88%E7%AE%97%E3%81%B8%E3%81%AE%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B%E3%83%BB%E4%BF%AE%E6%AD%A3%E6%8F%90%E6%A1%88">お問い合わせ・修正提案</a>
+    </p>
   </main>
+
+  <!-- 使い方と注意事項は別々の画面。本文の最後と右上の両方から閉じられます。 -->
+  <dialog id="usageDialog" class="info-dialog" aria-labelledby="usageDialogTitle">
+    <div class="info-dialog-header">
+      <h2 id="usageDialogTitle">使い方</h2>
+      <button type="button" class="info-dialog-x" data-close-dialog aria-label="使い方を閉じる">×</button>
+    </div>
+    <div class="info-dialog-body">
+      <h3>使い方</h3>
+      <ul>
+        <li>勤務開始・終了日時、時給、残業・深夜の割増率を入力し、必要に応じて休憩を設定してから「計算する」を押下してください。</li>
+        <li>計算した内容は、画面下部の計算履歴に追加されます。</li>
+      </ul>
+
+      <h3>切替と非表示</h3>
+      <ul>
+        <li>スマホ版は「📅」で日時入力をカレンダー式に切り替え、「↕️」でスクロール式に切り替えられます。PC版はカレンダー式のみです。</li>
+        <li>「残業 ＋％」「深夜 ＋％」「休憩」の文字を押下すると、入力欄の表示・非表示が切り替えられます。<br>※非表示でも、入力された値で計算されます。</li>
+      </ul>
+
+      <h3>履歴について</h3>
+      <ul>
+        <li>履歴の「コピー」を押すと、勤務開始日・時刻、勤務終了日・時刻、総勤務時間、日当をコピーでき、Excelなどに貼り付けられます。<br>例：2026/9/25　9:00　2026/9/25　17:00　8:00　10,000円</li>
+        <li>履歴にある「削除」で該当履歴を削除できます。</li>
+        <li>「履歴をすべて削除」を押すと、保存されたすべての履歴を削除します。</li>
+      </ul>
+
+      <h3>プライバシーの観点</h3>
+      <ul>
+        <li>本ツールはプライバシーの観点から、データベースを設けていません。</li>
+        <li>作成者が履歴を閲覧するための機能はありません。</li>
+      </ul>
+
+      <h3>履歴の保存について</h3>
+      <ul>
+        <li>履歴は、端末のブラウザ内だけに最大100件まで保存されます。</li>
+      </ul>
+
+      <h3>履歴が消えるタイミングについて</h3>
+      <ul>
+        <li>100件を超えると、古い履歴から削除されます。</li>
+        <li>アプリの「削除」「履歴をすべて削除」を押したとき。</li>
+        <li>ブラウザのCookieとサイトデータ（Webサイトデータ）を削除したとき。</li>
+        <li>プライベートブラウズで操作していた場合、プライベートブラウズを終了したとき。</li>
+        <li>ブラウザが保存データを自動削除したとき。<br>※Safariでは、サイトを操作しないままSafariを7日間使用すると、履歴が消える場合があります。</li>
+      </ul>
+      <button type="button" class="info-dialog-close" data-close-dialog>閉じる</button>
+    </div>
+  </dialog>
+
+  <dialog id="cautionDialog" class="info-dialog" aria-labelledby="cautionDialogTitle">
+    <div class="info-dialog-header">
+      <h2 id="cautionDialogTitle">注意事項</h2>
+      <button type="button" class="info-dialog-x" data-close-dialog aria-label="注意事項を閉じる">×</button>
+    </div>
+    <div class="info-dialog-body">
+      <h3>アプリ利用に当たって</h3>
+      <ul>
+        <li class="info-warning">本ツールの計算結果は参考値です。</li>
+        <li class="info-warning">実際の給与・日当の支払額を保証するものではありません。</li>
+        <li>勤務日時、休憩時間、時給、割増率の入力内容を確認し、ご自身の判断と責任でご利用ください。</li>
+      </ul>
+
+      <h3>計算方法と端数処理</h3>
+      <ul>
+        <li>残業・深夜の割増後の時給は、表示時に1円未満を切り捨てます。</li>
+        <li>日当は切り捨て前の時給を使って分単位で計算し、合計後に1円未満を切り捨てます。</li>
+        <li>画面に表示された時給を使って手計算した金額と、日当が一致しない場合があります。</li>
+      </ul>
+
+      <h3>計算結果とサイト情報の取り扱い</h3>
+      <ul>
+        <li class="info-warning">本ツールの計算結果や画面だけを根拠として、勤務先へ問い合わせることは禁止します。</li>
+        <li>実際の支払額に疑問がある場合は、正式な勤務記録や給与明細を確認してください。</li>
+        <li class="info-warning">本サイトのURLや画面のスクリーンショットを、勤務先の正社員へ提供・送付することを禁止します。</li>
+      </ul>
+      <button type="button" class="info-dialog-close" data-close-dialog>閉じる</button>
+    </div>
+  </dialog>
 
   <script src="app.js"></script>
 </body>
