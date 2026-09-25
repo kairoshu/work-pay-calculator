@@ -156,7 +156,10 @@ function enhanceMobileDateTime(input) {
   trigger.type = "button";
   trigger.className = "mobile-datetime-trigger";
   input.classList.add("mobile-wheel-enabled");
-  input.insertAdjacentElement("afterend", trigger);
+  const field = document.createElement("div");
+  field.className = "mobile-datetime-field";
+  input.before(field);
+  field.append(input, trigger);
 
   const label = input.closest(".form-group").querySelector("label").textContent;
   const refresh = () => {
